@@ -7,7 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 const AdminSetup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [secretKey, setSecretKey] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -15,11 +14,17 @@ const AdminSetup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke("setup-admin", {
-        body: { email, password, secretKey },
+        body: { email, password },
       });
 
       if (fnError) {
@@ -47,7 +52,7 @@ const AdminSetup = () => {
           </div>
           <h2 className="text-2xl font-bold text-foreground mb-2">Admin Created!</h2>
           <p className="text-muted-foreground mb-6">
-            Your admin account has been set up successfully.
+            Your admin account has been set up successfully. You can now login.
           </p>
           <Button asChild className="w-full">
             <a href="/admin">Go to Admin Login</a>
@@ -94,22 +99,6 @@ const AdminSetup = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Setup Secret Key
-              </label>
-              <Input
-                type="password"
-                placeholder="Enter setup secret key"
-                value={secretKey}
-                onChange={(e) => setSecretKey(e.target.value)}
-                required
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Default: setup-admin-2024
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
                 Admin Email
               </label>
               <Input
@@ -133,6 +122,9 @@ const AdminSetup = () => {
                 required
                 minLength={6}
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Minimum 6 characters
+              </p>
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
