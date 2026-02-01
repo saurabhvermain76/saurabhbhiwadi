@@ -4,6 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
+
+const contactSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").max(100),
+  phone: z.string().min(10, "Please enter a valid phone number").max(15),
+  message: z.string().min(10, "Message must be at least 10 characters").max(1000),
+});
 
 const ContactSection = () => {
   const { toast } = useToast();
@@ -13,30 +21,66 @@ const ContactSection = () => {
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
+
+    // Validate
+    const validation = contactSchema.safeParse(formData);
+    if (!validation.success) {
+      const fieldErrors: { [key: string]: string } = {};
+      validation.error.errors.forEach((err) => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0] as string] = err.message;
+        }
+      });
+      setErrors(fieldErrors);
+      return;
+    }
+
     setIsSubmitting(true);
     
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    toast({
-      title: "Message Sent Successfully!",
-      description: "We'll get back to you within 24 hours.",
-    });
-    
-    setFormData({ name: "", phone: "", message: "" });
-    setIsSubmitting(false);
+    try {
+      const { error } = await supabase.from("contact_submissions").insert({
+        name: formData.name.trim(),
+        phone: formData.phone.trim(),
+        message: formData.message.trim(),
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Message Sent Successfully!",
+        description: "We'll get back to you within 24 hours.",
+      });
+      
+      setFormData({ name: "", phone: "", message: "" });
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: value,
     }));
+    // Clear error when user types
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   return (
@@ -139,9 +183,11 @@ const ContactSection = () => {
                   placeholder="Enter your name"
                   value={formData.name}
                   onChange={handleChange}
-                  required
-                  className="h-12"
+                  className={`h-12 ${errors.name ? "border-destructive" : ""}`}
                 />
+                {errors.name && (
+                  <p className="text-sm text-destructive mt-1">{errors.name}</p>
+                )}
               </div>
 
               <div>
@@ -155,9 +201,11 @@ const ContactSection = () => {
                   placeholder="+91 XXXXX XXXXX"
                   value={formData.phone}
                   onChange={handleChange}
-                  required
-                  className="h-12"
+                  className={`h-12 ${errors.phone ? "border-destructive" : ""}`}
                 />
+                {errors.phone && (
+                  <p className="text-sm text-destructive mt-1">{errors.phone}</p>
+                )}
               </div>
 
               <div>
@@ -170,10 +218,12 @@ const ContactSection = () => {
                   placeholder="Tell us about your requirements..."
                   value={formData.message}
                   onChange={handleChange}
-                  required
                   rows={5}
-                  className="resize-none"
+                  className={`resize-none ${errors.message ? "border-destructive" : ""}`}
                 />
+                {errors.message && (
+                  <p className="text-sm text-destructive mt-1">{errors.message}</p>
+                )}
               </div>
 
               <Button
