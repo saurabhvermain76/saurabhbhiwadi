@@ -1,46 +1,52 @@
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, ArrowRight, Sparkles } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-const products = [
-  {
-    name: "LED Bulbs & Tube Lights",
-    benefit: "Energy-efficient lighting that lasts 25,000+ hours",
-    image: "https://images.unsplash.com/photo-1565814329452-e1efa11c5b89?w=400&h=300&fit=crop",
-  },
-  {
-    name: "Modular Switches & Sockets",
-    benefit: "Sleek designs with enhanced safety features",
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
-  },
-  {
-    name: "MCB, RCCB & Distribution Boards",
-    benefit: "Protection against overload and short circuits",
-    image: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=300&fit=crop",
-  },
-  {
-    name: "Wires & Cables",
-    benefit: "ISI certified for maximum safety and durability",
-    image: "https://images.unsplash.com/photo-1509281373149-e957c6296406?w=400&h=300&fit=crop",
-  },
-  {
-    name: "Fans (Ceiling & Exhaust)",
-    benefit: "High-speed performance with low power consumption",
-    image: "https://images.unsplash.com/photo-1635695392513-ccc5e7e4e3b4?w=400&h=300&fit=crop",
-  },
-  {
-    name: "Industrial Electrical Accessories",
-    benefit: "Heavy-duty components for commercial use",
-    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=300&fit=crop",
-  },
-  {
-    name: "Inverters & Batteries",
-    benefit: "Reliable backup power for uninterrupted supply",
-    image: "https://images.unsplash.com/photo-1619594455093-67f9f8a4f9b9?w=400&h=300&fit=crop",
-  },
-];
+interface Product {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  image_url: string | null;
+  featured: boolean;
+}
+
+const defaultImages: { [key: string]: string } = {
+  "LED Lights": "https://images.unsplash.com/photo-1565814329452-e1efa11c5b89?w=400&h=300&fit=crop",
+  "Switches & Sockets": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
+  "MCB / DB Panels": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=300&fit=crop",
+  "Wires & Cables": "https://images.unsplash.com/photo-1509281373149-e957c6296406?w=400&h=300&fit=crop",
+  "Fans": "https://images.unsplash.com/photo-1635695392513-ccc5e7e4e3b4?w=400&h=300&fit=crop",
+  "Industrial Electrical Items": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=300&fit=crop",
+  "Inverter & Battery": "https://images.unsplash.com/photo-1619594455093-67f9f8a4f9b9?w=400&h=300&fit=crop",
+};
 
 const ProductsSection = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("*")
+        .order("featured", { ascending: false });
+      
+      if (data) {
+        setProducts(data);
+      }
+      setIsLoading(false);
+    };
+
+    fetchProducts();
+  }, []);
+
+  const getImage = (product: Product) => {
+    return product.image_url || defaultImages[product.category] || defaultImages["LED Lights"];
+  };
+
   return (
     <section id="products" className="py-20 md:py-28 bg-background">
       <div className="container mx-auto px-4">
@@ -60,43 +66,58 @@ const ProductsSection = () => {
         </div>
 
         {/* Products Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {products.map((product, index) => (
-            <div
-              key={index}
-              className="group bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/30 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-            >
-              {/* Product Image */}
-              <div className="relative h-48 overflow-hidden">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-dark/60 to-transparent" />
-                <Badge className="absolute top-4 right-4 bg-primary text-primary-foreground border-0">
-                  <Sparkles className="w-3 h-3 mr-1" />
-                  In Stock
-                </Badge>
-              </div>
-
-              {/* Product Info */}
-              <div className="p-5">
-                <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
-                  {product.name}
-                </h3>
-                <p className="text-muted-foreground text-sm mb-4">
-                  {product.benefit}
-                </p>
-                <div className="flex items-center gap-2 text-xs">
-                  <Badge variant="outline" className="border-yellow-accent/30 text-yellow-accent bg-yellow-accent/10">
-                    Available at Saurabh Enterprises
-                  </Badge>
+        {isLoading ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(7)].map((_, i) => (
+              <div key={i} className="bg-card border border-border rounded-2xl overflow-hidden animate-pulse">
+                <div className="h-48 bg-secondary" />
+                <div className="p-5">
+                  <div className="h-4 bg-secondary rounded w-20 mb-2" />
+                  <div className="h-5 bg-secondary rounded w-3/4 mb-2" />
+                  <div className="h-4 bg-secondary rounded w-full" />
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {products.map((product) => (
+              <div
+                key={product.id}
+                className="group bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/30 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+              >
+                {/* Product Image */}
+                <div className="relative h-48 overflow-hidden">
+                  <img
+                    src={getImage(product)}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-dark/60 to-transparent" />
+                  <Badge className="absolute top-4 right-4 bg-primary text-primary-foreground border-0">
+                    <Sparkles className="w-3 h-3 mr-1" />
+                    In Stock
+                  </Badge>
+                </div>
+
+                {/* Product Info */}
+                <div className="p-5">
+                  <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
+                    {product.name}
+                  </h3>
+                  <p className="text-muted-foreground text-sm mb-4">
+                    {product.description}
+                  </p>
+                  <div className="flex items-center gap-2 text-xs">
+                    <Badge variant="outline" className="border-yellow-accent/30 text-yellow-accent bg-yellow-accent/10">
+                      Available at Saurabh Enterprises
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* CTA Banner */}
         <div className="mt-16 relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-electric to-electric-dark p-8 md:p-12">
