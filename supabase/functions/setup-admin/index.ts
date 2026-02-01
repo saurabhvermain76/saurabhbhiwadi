@@ -23,14 +23,19 @@ serve(async (req: Request) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { email, password, secretKey } = await req.json();
+    const { email, password } = await req.json();
 
-    // Verify secret key (simple protection)
-    const expectedSecret = Deno.env.get("ADMIN_SETUP_SECRET") || "setup-admin-2024";
-    if (secretKey !== expectedSecret) {
+    if (!email || !password) {
       return new Response(
-        JSON.stringify({ error: "Invalid secret key" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Email and password are required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (password.length < 6) {
+      return new Response(
+        JSON.stringify({ error: "Password must be at least 6 characters" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -48,7 +53,7 @@ serve(async (req: Request) => {
 
     if (existingRoles && existingRoles.length > 0) {
       return new Response(
-        JSON.stringify({ error: "Admin user already exists" }),
+        JSON.stringify({ error: "Admin user already exists. Please login at /admin" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -62,6 +67,12 @@ serve(async (req: Request) => {
 
     if (authError) {
       console.error("Error creating user:", authError);
+      if (authError.message.includes("already been registered")) {
+        return new Response(
+          JSON.stringify({ error: "This email is already registered. Try a different email." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       throw authError;
     }
 
