@@ -33,7 +33,7 @@ const HeroSection = () => {
   const heading = heroData?.heading || "Powering Homes & Businesses with Reliable Electrical Solutions";
   const subheading = heroData?.subheading || "Complete Electrical Services & Quality Electrical Items Under One Roof";
   const ctaButtonText = heroData?.cta_button_text || "Call Now";
-  const ctaPhone = heroData?.cta_phone || "+91 8949272586";
+  const ctaPhone = heroData?.cta_phone || "+91 9667000377";
   const backgroundImage = heroData?.background_images?.[0] || heroImage;
 
   return (
