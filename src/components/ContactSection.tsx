@@ -106,7 +106,7 @@ const ContactSection = () => {
             {/* Contact Cards */}
             <div className="space-y-4">
               <a
-                href="tel:+918949272586"
+                href="tel:+919667000377"
                 className="flex items-start gap-4 p-6 bg-card border border-border rounded-2xl hover:border-primary/30 hover:shadow-lg transition-all group"
               >
                 <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary transition-colors">
@@ -114,8 +114,8 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <h3 className="font-bold text-foreground mb-1">Call Us</h3>
-                  <p className="text-primary font-semibold text-lg">+91 8949272586</p>
-                  <p className="text-muted-foreground text-sm">Available 9 AM - 9 PM</p>
+                  <p className="text-primary font-semibold text-lg">+91 9667000377</p>
+                  <p className="text-muted-foreground text-sm">Available 10 AM - 8:30 PM</p>
                 </div>
               </a>
 
@@ -142,7 +142,7 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <h3 className="font-bold text-foreground mb-1">Email Us</h3>
-                  <p className="text-primary">contact@saurabhenterprises.in</p>
+                  <p className="text-primary">rdea71@gmail.com</p>
                 </div>
               </a>
             </div>
